@@ -14,20 +14,23 @@ Write only `.cursor/artifacts/technical-schema-reference.md`. This file is an in
 
 ## Verification targets
 
-- KServe API version: `serving.kserve.io/v1beta1` (`InferenceService`)
-- KServe ServingRuntime: `serving.kserve.io/v1alpha1`
-- Gateway API: `gateway.networking.k8s.io/v1`
-- Kuadrant RateLimitPolicy and AuthPolicy: `kuadrant.io/v1beta2`
-- Kueue ClusterQueue and LocalQueue: `kueue.x-k8s.io/v1beta1`
-- NVIDIA GPU Operator ClusterPolicy: `nvidia.com/v1`
+Read `.cursor/artifacts/technical-schema-reference.md` before changing an API version. The current authoring versions are:
+
+- KServe `InferenceService`: `serving.kserve.io/v1beta1`. Reject `serving.kserve.io/v1alpha1` for this kind.
+- KServe `ServingRuntime`: `serving.kserve.io/v1alpha1`
+- Gateway API `Gateway` and `HTTPRoute`: `gateway.networking.k8s.io/v1`
+- Kuadrant `AuthPolicy` and `RateLimitPolicy`: `kuadrant.io/v1`. Reject `kuadrant.io/v1beta2`.
+- Kueue `ClusterQueue`, `ResourceFlavor`, and `LocalQueue`: `kueue.x-k8s.io/v1beta1` for OpenShift AI 3.5. Upstream Kueue 0.20 stores `kueue.x-k8s.io/v1beta2` and rejects `v1beta1`.
+- NVIDIA GPU Operator `ClusterPolicy`: `nvidia.com/v1`
 
 ## Technical rules
 
-- H100 SXM5 supports MIG. Validate exact profile strings: `3g.40gb`, `1g.10gb`.
-- L40S PCIe does not support MIG. DC2 uses time-slicing exclusively.
+- DC1 is Azure. Two `Standard_ND96isr_H100_v5` virtual machines each have 8 NVIDIA H100 80GB GPUs. Three additional workers have no GPUs.
+- DC1 GPU node 1 uses MIG config `all-disabled`. DC1 GPU node 2 uses `node2-hybrid-profile`: GPUs 0-3 full, and each of GPUs 4-7 has one `3g.40gb` and four `1g.10gb`.
+- DC2 is four on-premises hosts with 4 L40S PCIe GPUs each. L40S does not support MIG. DC2 uses time-slicing with `replicas: 4`.
 - Flagship vLLM flags must include `--tensor-parallel-size 4`, `--kv-cache-dtype fp8`, `--gpu-memory-utilization 0.92`, `--max-model-len 32768`.
 - Whisper vLLM flags must include `--task transcription`.
-- PVC mounts use `ReadWriteMany` with CephFS storage classes.
+- PVC mounts use `ReadWriteMany` on StorageClass `ocs-storagecluster-cephfs`.
 
 ## Artifact
 

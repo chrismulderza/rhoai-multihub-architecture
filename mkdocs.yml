@@ -59,3 +59,13 @@ plugins:
 
 nav:
   - Home: index.md
+  - Executive:
+      - Executive summary: executive/executive-summary.md
+      - Business value and TCO: executive/business-value-tco.md
+      - SLA and disaster recovery: executive/sla-dr-strategy.md
+  - Architecture:
+      - Global topology: architecture/global-topology.md
+      - Data center 1 H100: architecture/datacenter-1-h100.md
+      - Data center 2 L40S: architecture/datacenter-2-l40s.md
+      - MaaS gateway: architecture/maas-gateway-kuadrant.md
+      - Storage and networking: architecture/storage-networking.md

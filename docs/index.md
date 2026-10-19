@@ -1,6 +1,6 @@
 # RHOAI Multi-Cluster Models-as-a-Service
 
-This guide specifies a consolidated Models-as-a-Service platform on Red Hat OpenShift AI. Data center 1 serves the flagship large language model on NVIDIA H100 SXM5 accelerators. Data center 2 serves speech, embeddings, and smaller models on NVIDIA L40S PCIe accelerators. A single OpenAI-compatible gateway fronts both sites.
+This guide specifies a consolidated Models-as-a-Service platform on Red Hat OpenShift AI. An Advanced Cluster Management hub in Azure publishes the only AI gateway, and only to the corporate network. Data center 1 serves the flagship large language model on NVIDIA H100 GPUs. Data center 2 serves speech, embeddings, and smaller models on NVIDIA L40S PCIe accelerators.
 
 - [Who this guide is for](#who-this-guide-is-for)
 - [Platform constraints](#platform-constraints)
@@ -10,7 +10,7 @@ This guide specifies a consolidated Models-as-a-Service platform on Red Hat Open
 
 ### Executive track
 
-The [executive track](#executive) is written for CIOs, CTOs, infrastructure VPs, and chief AI architects. It covers total cost of ownership for zero-replica failover, service-level tiers, multi-datacenter disaster recovery, and the utilization economics of mixing MIG partitions with time-sliced GPUs.
+The [executive track](executive/executive-summary.md) is written for CIOs, CTOs, infrastructure VPs, and chief AI architects. It covers total cost of ownership for zero-replica failover, service-level tiers, multi-datacenter disaster recovery, and the utilization economics of mixing MIG partitions with time-sliced GPUs.
 
 ### Engineering track
 
@@ -29,11 +29,17 @@ Manifests in this guide follow these rules.
 
 ### Executive
 
-Business value, total cost of ownership of zero-replica failover, service-level tiers, and the disaster-recovery posture across both data centers.
+- [Executive summary](executive/executive-summary.md) covers the hub, the two data centers, and the internal gateway.
+- [Business value and TCO](executive/business-value-tco.md) covers the four-H100 cost avoidance and the utilization target.
+- [SLA and disaster recovery](executive/sla-dr-strategy.md) covers flagship failover inside data center 1 and the latency bands.
 
 ### Architecture
 
-Global routing topology, per-datacenter accelerator layout, the Models-as-a-Service gateway, and storage plus network design.
+- [Global topology](architecture/global-topology.md) covers private links and the flagship failover state machine.
+- [Data center 1 H100](architecture/datacenter-1-h100.md) covers the Azure virtual machines, MIG layout, and H100 memory bandwidth.
+- [Data center 2 L40S](architecture/datacenter-2-l40s.md) covers the on-premises hosts and time-slicing.
+- [MaaS gateway](architecture/maas-gateway-kuadrant.md) covers path routing from the hub.
+- [Storage and networking](architecture/storage-networking.md) covers local CephFS volumes and the private links.
 
 ### Platform prerequisites
 
