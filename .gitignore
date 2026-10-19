@@ -1,0 +1,30 @@
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# MkDocs build output
+/site/
+
+# Local environment and tool overrides
+.env
+.env.*
+!.env.example
+mise.local.toml
+
+# OS and editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*~
