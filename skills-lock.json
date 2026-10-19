@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "mise": {
+      "source": "fmind/dot",
+      "sourceType": "github",
+      "skillPath": "skills/mise/SKILL.md",
+      "computedHash": "9a1a49684e2416210a7403f02e7003944495b3733fb7954e9837f35cf47f7bf3"
+    }
+  }
+}

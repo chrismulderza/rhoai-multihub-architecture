@@ -1,0 +1,154 @@
+---
+name: mkdocs-redhat-github-pages
+description: Guides the agent to generate, build, and deploy MkDocs documentation styled with a Red Hat theme to GitHub Pages.
+---
+
+# MkDocs Red Hat Deployment Skill (GitHub Pages)
+
+## System Context & Rules
+When managing documentation for this repository, you must structure configurations, local layouts, and deployment automation files to support a seamless push-to-deploy pipeline targeting GitHub Pages.
+
+## Configuration Blueprint (`mkdocs.yml`)
+Ensure the `site_url` points directly to your target GitHub Pages address. Update your `mkdocs.yml` dynamically based on the repository details:
+
+```yaml
+site_name: "Red Hat Project Documentation"
+# Format: https://<username or org>.github.io/<repository-name>/
+site_url: "https://github.io"
+repo_url: "https://github.com"
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: red
+      accent: red
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: red
+      accent: red
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+```
+
+## Deployment Automation Workflow
+The agent must ensure that a deployment workflow file exists at `.github/workflows/deploy-docs.yml`. If missing or incomplete, create or overwrite it with the following blueprint. The job host is the GitHub-hosted Linux runner. Every build and publish step runs in the Red Hat UBI image. Do not use an Ubuntu container image, `actions/setup-python`, or `actions/cache`.
+
+```yaml
+name: Deploy Red Hat Docs to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Host label only. Build and publish steps run in the UBI image below.
+    runs-on: ubuntu-latest
+    container:
+      image: registry.access.redhat.com/ubi9/python-314:9.8-1790038024
+      options: --user root
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install git
+        run: dnf install -y git
+
+      - name: Install documentation dependencies
+        run: python -m pip install --no-cache-dir --require-hashes -r requirements.lock
+
+      - name: Set the published site URL
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          owner, repo = os.environ["GITHUB_REPOSITORY"].split("/", 1)
+          if repo.endswith(".github.io"):
+              site_url = f"https://{owner}.github.io/"
+          else:
+              site_url = f"https://{owner}.github.io/{repo}/"
+          repo_url = f"https://github.com/{owner}/{repo}"
+          path = Path("mkdocs.yml")
+          lines = path.read_text().splitlines()
+          keys = {
+              "site_url": f'site_url: "{site_url}"',
+              "repo_url": f'repo_url: "{repo_url}"',
+          }
+          replaced = set()
+          updated = []
+          for line in lines:
+              stripped = line.lstrip()
+              matched = False
+              for key, value in keys.items():
+                  if stripped.startswith(f"{key}:"):
+                      updated.append(value)
+                      replaced.add(key)
+                      matched = True
+                      break
+              if not matched:
+                  updated.append(line)
+          missing = [keys[key] for key in ("site_url", "repo_url") if key not in replaced]
+          if missing:
+              insert_at = 0
+              for index, line in enumerate(updated):
+                  if line.startswith("site_name:"):
+                      insert_at = index + 1
+                      break
+              updated[insert_at:insert_at] = missing
+          path.write_text("\n".join(updated) + "\n")
+          PY
+
+      - name: Publish the documentation site
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          mkdocs gh-deploy --force --strict
+```
+
+## Agent Workflows
+
+### 1. Build Verification
+Always run verification locally before committing changes to ensure no broken relative path syntax slips into production.
+- **Command:** `mkdocs build --strict`
+
+### 2. Deployment Setup Instructions
+When provisioning this documentation framework for a new repo, explicitly instruct the user to configure repository settings:
+1. Navigate to **Settings** > **Pages** in the GitHub repository interface.
+2. Under **Build and deployment** -> **Source**, make sure it is set to **Deploy from a branch**.
+3. Set the **Branch** to `gh-pages` and folder to `/ (root)`.
+

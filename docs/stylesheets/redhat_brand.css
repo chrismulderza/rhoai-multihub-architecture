@@ -1,0 +1,18 @@
+/* Custom Red Hat Color Palette Injection Hooks */
+:root, [data-md-color-scheme="default"] {
+  --md-primary-fg-color:        #EE0000; /* Official Red Hat Red */
+  --md-primary-fg-color--dark: #CC0000;
+  --md-accent-fg-color:         #EE0000;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color:        #EE0000; 
+  --md-primary-fg-color--dark: #CC0000;
+  --md-accent-fg-color:         #EE0000;
+}
+
+/* Subtle enterprise header touchups */
+.md-header {
+  border-bottom: 2px solid #000000;
+}
+

@@ -1,0 +1,17 @@
+---
+description: Production-grade rules for generating the RHOAI deployment guide
+globs: docs/**/*.md, mkdocs.yml
+alwaysApply: true
+---
+
+# Documentation & Engineering Standards
+
+- **Zero Placeholders:** Never use `# <insert config here>`, `TODO`, or ellipses (`...`). Every YAML manifest, cURL command, and Python script must be fully populated and syntactically valid.
+- **Dual-Audience Separation:**
+  - Files under `docs/executive/` must focus on business value, TCO savings of zero-replica failover, SLA tiers, and high-level Mermaid architecture diagrams.
+  - Files under `docs/model-serving/`, `docs/gpu-partitioning/`, and `docs/platform-prerequisites/` must provide verbatim CLI commands and production Kubernetes manifests.
+- **High Availability Mandates:**
+  - Single-replica flagship model must specify 10s eviction tolerations for `node.kubernetes.io/not-ready` and `node.kubernetes.io/unreachable`.
+  - Use `flagship-critical-priority` (value: 1000000000) with `PreemptLowerPriority`.
+  - Model storage mounts must strictly use CephFS `ReadWriteMany` (RWX) PVCs.
+- **MkDocs Strict Compliance:** All markdown links must resolve locally to prevent broken references during `mkdocs build --strict`.
