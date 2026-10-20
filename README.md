@@ -13,17 +13,35 @@ mise install --locked
 mise run install
 ```
 
-## Tasks
+## Build and serve locally
+
+Complete [Setup](#setup) first. `mise run install` syncs the MkDocs packages into `.venv`. Both commands below run that step when the virtualenv is out of date.
+
+Build the static site:
 
 ```bash
 mise run build
+```
+
+The build writes `site/` and exits non-zero when a local link or markdown file is invalid. `site/` stays untracked.
+
+Preview the guide with live reload:
+
+```bash
 mise run serve:docs
+```
+
+Open `http://127.0.0.1:8000`. Saving a page under `docs/` or `mkdocs.yml` reloads the browser. Press Ctrl-C to stop the server. The preview uses the same strict checks as the build, so a broken local link fails at startup.
+
+## Tasks
+
+```bash
 mise run format
 mise run check
 mise run all
 ```
 
-`mise run build` writes the static site to `site/` and fails when a link or markdown file is invalid. `mise run serve:docs` previews the site and reloads it when the source files change. `mise run check` checks formatting and builds the site. `mise run all` formats sources, then runs those checks.
+`mise run check` checks formatting and builds the site. `mise run all` formats sources, then runs those checks.
 
 ## Dependency updates
 

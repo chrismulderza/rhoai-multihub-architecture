@@ -1,0 +1,355 @@
+# ==============================================================================
+# ENTERPRISE AI ACCELERATOR & CLUSTER RESOURCE SPECIFICATION
+# Schema: resource_specification.yaml
+# Compatibility: Red Hat OpenShift AI (RHOAI) / OpenShift Container Platform (OCP)
+# ==============================================================================
+version: "v1alpha2"
+metadata:
+  name: "enterprise-rhoai-resource-catalog"
+  description: "Raw hardware capabilities, certified accelerator catalog, and cluster inventories for dynamic RHOAI allocation"
+
+# ==============================================================================
+# 1. ACCELERATOR HARDWARE CATALOG (RHOAI Certified & Validated)
+# ==============================================================================
+accelerator_catalog:
+  # ----------------------------------------------------------------------------
+  # NVIDIA Accelerators (NVIDIA GPU Operator -> nvidia.com/gpu)
+  # ----------------------------------------------------------------------------
+  nvidia_b200:
+    vendor: "NVIDIA"
+    architecture: "Blackwell"
+    form_factor: "SXM6"
+    compute:
+      fp8_tflops: 4500
+      bf16_tflops: 2250
+    memory:
+      capacity_gb: 192
+      type: "HBM3e"
+      bandwidth_gbps: 8000
+    interconnect:
+      type: "NVLink 5"
+      bidirectional_bandwidth_gbps: 1800
+    partitioning_capabilities:
+      mig_supported: true
+      mig_profiles: ["1g.24gb", "2g.48gb", "3g.96gb", "4g.96gb", "7g.192gb"]
+      time_slicing_supported: true
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: "nvidia.com/mig-"
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  nvidia_h200:
+    vendor: "NVIDIA"
+    architecture: "Hopper"
+    form_factor: "SXM5"
+    compute:
+      fp8_tflops: 3958
+      bf16_tflops: 1979
+    memory:
+      capacity_gb: 141
+      type: "HBM3e"
+      bandwidth_gbps: 4800
+    interconnect:
+      type: "NVLink 4"
+      bidirectional_bandwidth_gbps: 900
+    partitioning_capabilities:
+      mig_supported: true
+      mig_profiles: ["1g.20gb", "2g.40gb", "3g.70gb", "4g.70gb", "7g.141gb"]
+      time_slicing_supported: true
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: "nvidia.com/mig-"
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  nvidia_h100_sxm:
+    vendor: "NVIDIA"
+    architecture: "Hopper"
+    form_factor: "SXM5"
+    compute:
+      fp8_tflops: 3958
+      bf16_tflops: 1979
+    memory:
+      capacity_gb: 80
+      type: "HBM3"
+      bandwidth_gbps: 3350
+    interconnect:
+      type: "NVLink 4"
+      bidirectional_bandwidth_gbps: 900
+    partitioning_capabilities:
+      mig_supported: true
+      mig_profiles: ["1g.10gb", "2g.20gb", "3g.40gb", "4g.40gb", "7g.80gb"]
+      time_slicing_supported: true
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: "nvidia.com/mig-"
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  nvidia_h100_pcie:
+    vendor: "NVIDIA"
+    architecture: "Hopper"
+    form_factor: "PCIe Gen5"
+    compute:
+      fp8_tflops: 3026
+      bf16_tflops: 1513
+    memory:
+      capacity_gb: 80
+      type: "HBM2e"
+      bandwidth_gbps: 2000
+    interconnect:
+      type: "NVLink Bridge (Pair-only) / PCIe Gen5"
+      bidirectional_bandwidth_gbps: 128
+    partitioning_capabilities:
+      mig_supported: true
+      mig_profiles: ["1g.10gb", "2g.20gb", "3g.40gb", "4g.40gb", "7g.80gb"]
+      time_slicing_supported: true
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: "nvidia.com/mig-"
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  nvidia_a100_sxm:
+    vendor: "NVIDIA"
+    architecture: "Ampere"
+    form_factor: "SXM4"
+    compute:
+      fp8_tflops: 0
+      bf16_tflops: 624
+    memory:
+      capacity_gb: 80
+      type: "HBM2e"
+      bandwidth_gbps: 2039
+    interconnect:
+      type: "NVLink 3"
+      bidirectional_bandwidth_gbps: 600
+    partitioning_capabilities:
+      mig_supported: true
+      mig_profiles: ["1g.10gb", "2g.20gb", "3g.40gb", "4g.40gb", "7g.80gb"]
+      time_slicing_supported: true
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: "nvidia.com/mig-"
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  nvidia_l40s:
+    vendor: "NVIDIA"
+    architecture: "Ada Lovelace"
+    form_factor: "PCIe Gen4"
+    compute:
+      fp8_tflops: 1466
+      bf16_tflops: 733
+    memory:
+      capacity_gb: 48
+      type: "GDDR6 with ECC"
+      bandwidth_gbps: 862
+    interconnect:
+      type: "PCIe Gen4 x16"
+      bidirectional_bandwidth_gbps: 64
+    partitioning_capabilities:
+      mig_supported: false
+      time_slicing_supported: true
+      default_time_slice_replicas: 4
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: null
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  nvidia_l4:
+    vendor: "NVIDIA"
+    architecture: "Ada Lovelace"
+    form_factor: "PCIe Gen4 (Low Profile)"
+    compute:
+      fp8_tflops: 485
+      bf16_tflops: 242
+    memory:
+      capacity_gb: 24
+      type: "GDDR6"
+      bandwidth_gbps: 300
+    interconnect:
+      type: "PCIe Gen4 x16"
+      bidirectional_bandwidth_gbps: 64
+    partitioning_capabilities:
+      mig_supported: false
+      time_slicing_supported: true
+      default_time_slice_replicas: 4
+    rhoai_integration:
+      operator: "nvidia-gpu-operator"
+      k8s_resource_name: "nvidia.com/gpu"
+      mig_resource_prefix: null
+      recommended_runtimes: ["vllm", "triton", "tei"]
+
+  # ----------------------------------------------------------------------------
+  # AMD Instinct Accelerators (AMD GPU Operator -> amd.com/gpu)
+  # ----------------------------------------------------------------------------
+  amd_instinct_mi300x:
+    vendor: "AMD"
+    architecture: "CDNA 3"
+    form_factor: "OAM"
+    compute:
+      fp8_tflops: 5220
+      bf16_tflops: 2610
+    memory:
+      capacity_gb: 192
+      type: "HBM3"
+      bandwidth_gbps: 5300
+    interconnect:
+      type: "Infinity Fabric 3"
+      bidirectional_bandwidth_gbps: 896
+    partitioning_capabilities:
+      mig_supported: false
+      spatial_partitioning_supported: true
+      time_slicing_supported: true
+    rhoai_integration:
+      operator: "amd-gpu-operator"
+      k8s_resource_name: "amd.com/gpu"
+      mig_resource_prefix: null
+      recommended_runtimes: ["vllm-rocm", "triton"]
+
+  # ----------------------------------------------------------------------------
+  # Intel Gaudi Accelerators (Intel Gaudi Operator -> habana.ai/gaudi)
+  # ----------------------------------------------------------------------------
+  intel_gaudi_3:
+    vendor: "Intel"
+    architecture: "Gaudi 3"
+    form_factor: "OAM / PCIe"
+    compute:
+      fp8_tflops: 3670
+      bf16_tflops: 1835
+    memory:
+      capacity_gb: 128
+      type: "HBM2e"
+      bandwidth_gbps: 3700
+    interconnect:
+      type: "Integrated 24x 200GbE RoCEv2 RDMA ports"
+      bidirectional_bandwidth_gbps: 1200
+    partitioning_capabilities:
+      mig_supported: false
+      time_slicing_supported: false
+    rhoai_integration:
+      operator: "intel-gaudi-operator"
+      k8s_resource_name: "habana.ai/gaudi"
+      mig_resource_prefix: null
+      recommended_runtimes: ["vllm-gaudi", "tgi-gaudi"]
+
+# ==============================================================================
+# 2. TOPOLOGY & UNPARTITIONED CLUSTER HARDWARE INVENTORY
+# ==============================================================================
+topology:
+  inter_datacenter_wan:
+    bandwidth_gbps: 10
+    latency_ms: 12
+    encryption: "IPsec / MACsec"
+
+  datacenters:
+    # --------------------------------------------------------------------------
+    # Data Center 1: Core Training & Heavy Reasoning Hub
+    # --------------------------------------------------------------------------
+    - name: "datacenter-1-core"
+      location: "Primary-HQ"
+      cluster_metadata:
+        openshift_version: "4.19"
+        rhoai_version: "3.5"
+        ingress_domain: "apps.dc1.domain.com"
+      storage_fabrics:
+        - name: "cephfs-rwx-nvme"
+          type: "OpenShift Data Foundation (ODF)"
+          access_mode: "ReadWriteMany"
+          capacity_tb: 50
+          mount_path: "/mnt/models"
+          iops: 120000
+        - name: "object-store-s3"
+          type: "Ceph RadosGW"
+          endpoint: "https://s3.dc1.domain.com"
+          bucket: "rhoai-model-registry"
+      networking:
+        pod_network_cni: "OVN-Kubernetes"
+        secondary_fabric: "RoCEv2 200Gbps"
+      nodes:
+        - name: "worker-h100-node1"
+          role: "heavy-inference-training"
+          host_specs:
+            cpu_cores: 128
+            system_memory_gb: 1024
+          accelerator_configuration:
+            catalog_ref: "nvidia_h100_sxm"
+            installed_count: 8
+            interconnect_topology: "NVSwitch Full Mesh (900 GB/s)"
+
+        - name: "worker-h100-node2"
+          role: "hybrid-serving-dev-failover"
+          host_specs:
+            cpu_cores: 128
+            system_memory_gb: 1024
+          accelerator_configuration:
+            catalog_ref: "nvidia_h100_sxm"
+            installed_count: 8
+            interconnect_topology: "NVSwitch Full Mesh (900 GB/s)"
+
+    # --------------------------------------------------------------------------
+    # Data Center 2: Horizontal Scale-Out Inference & Speech Hub
+    # --------------------------------------------------------------------------
+    - name: "datacenter-2-scale"
+      location: "Secondary-Colo"
+      cluster_metadata:
+        openshift_version: "4.19"
+        rhoai_version: "3.5"
+        ingress_domain: "apps.dc2.domain.com"
+      storage_fabrics:
+        - name: "cephfs-rwx-storage"
+          type: "OpenShift Data Foundation (ODF)"
+          access_mode: "ReadWriteMany"
+          capacity_tb: 30
+          mount_path: "/mnt/models"
+          iops: 60000
+        - name: "object-store-s3"
+          type: "Ceph RadosGW (Asynchronously mirrored with DC1)"
+          endpoint: "https://s3.dc2.domain.com"
+          bucket: "rhoai-model-registry"
+      networking:
+        pod_network_cni: "OVN-Kubernetes"
+        secondary_fabric: "PCIe Gen4 / 100Gbps Ethernet"
+      nodes:
+        - name: "worker-l40s-node1"
+          role: "vision-serving-training"
+          host_specs:
+            cpu_cores: 64
+            system_memory_gb: 512
+          accelerator_configuration:
+            catalog_ref: "nvidia_l40s"
+            installed_count: 4
+            interconnect_topology: "PCIe Gen4 x16 Switch (No NVLink)"
+
+        - name: "worker-l40s-node2"
+          role: "vision-serving-training"
+          host_specs:
+            cpu_cores: 64
+            system_memory_gb: 512
+          accelerator_configuration:
+            catalog_ref: "nvidia_l40s"
+            installed_count: 4
+            interconnect_topology: "PCIe Gen4 x16 Switch (No NVLink)"
+
+        - name: "worker-l40s-node3"
+          role: "horizontal-llm-serving"
+          host_specs:
+            cpu_cores: 64
+            system_memory_gb: 512
+          accelerator_configuration:
+            catalog_ref: "nvidia_l40s"
+            installed_count: 4
+            interconnect_topology: "PCIe Gen4 x16 Switch (No NVLink)"
+
+        - name: "worker-l40s-node4"
+          role: "audio-sts-embeddings-serving"
+          host_specs:
+            cpu_cores: 64
+            system_memory_gb: 512
+          accelerator_configuration:
+            catalog_ref: "nvidia_l40s"
+            installed_count: 4
+            interconnect_topology: "PCIe Gen4 x16 Switch (No NVLink)"

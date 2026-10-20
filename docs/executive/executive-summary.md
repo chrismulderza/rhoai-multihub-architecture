@@ -5,7 +5,7 @@ Red Hat OpenShift AI hosts one internal Models-as-a-Service platform for the cor
 The gateway is reachable from the corporate network over a private link. It has no internet listener. Private links also connect the hub to each data center, and the two data centers to each other.
 
 ```mermaid
-flowchart LR
+flowchart TD
   corp["Corporate network"]
   hub["ACM hub in Azure"]
   dc1["DC1 Azure H100 cluster"]

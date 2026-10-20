@@ -3,7 +3,7 @@
 Three OpenShift clusters form the platform. The Advanced Cluster Management hub in Azure is the only cluster that publishes the AI gateway. Data center 1 and data center 2 are managed clusters. Private links connect the hub to each data center, and the data centers to each other. Corporate users reach the hub gateway over a private link. The gateway has no internet listener.
 
 ```mermaid
-flowchart LR
+flowchart TD
   corp["Corporate network"]
   hub["ACM hub in Azure"]
   dc1["DC1 Azure H100 cluster"]
@@ -41,6 +41,7 @@ Failover is a reschedule inside data center 1. Node 1 serves the replica on four
 
 ```mermaid
 stateDiagram-v2
+  direction TB
   [*] --> ServingOnNode1
   ServingOnNode1 --> TolerationWindow: Node 1 is not ready
   TolerationWindow --> ServingOnNode1: Node 1 recovers within 10 seconds

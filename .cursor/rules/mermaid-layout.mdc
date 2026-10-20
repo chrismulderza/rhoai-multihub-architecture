@@ -1,0 +1,28 @@
+---
+description: Prefer top-to-bottom Mermaid diagrams so wide left-to-right flows do not compress
+globs: docs/**/*.md
+alwaysApply: true
+---
+
+# Mermaid diagram layout
+
+Draw Mermaid diagrams top to bottom when that layout stays readable. A left-to-right row compresses node labels on the page.
+
+- Flowcharts start with `flowchart TD`.
+- State diagrams set `direction TB` on the line after `stateDiagram-v2`.
+- Keep the existing node labels and edge labels when changing direction.
+- Use `flowchart LR` or `direction LR` only when a vertical layout cannot show the relationship clearly.
+
+```mermaid
+flowchart TD
+  corp["Corporate network"]
+  hub["ACM hub in Azure"]
+  corp -->|"private link"| hub
+```
+
+```mermaid
+stateDiagram-v2
+  direction TB
+  [*] --> ServingOnNode1
+  ServingOnNode1 --> TolerationWindow: Node 1 is not ready
+```

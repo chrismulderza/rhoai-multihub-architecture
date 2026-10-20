@@ -1,0 +1,453 @@
+# ==============================================================================
+# ENTERPRISE AI WORKLOAD SIZING & RESOURCE SPECIFICATION (VALIDATED)
+# Schema: workload-specification.yaml
+# Repository Source: Hugging Face Hub / Red Hat AI Validated Models
+# Runtime Target: Red Hat OpenShift AI MaaS (KServe, vLLM, TEI, Triton)
+# ==============================================================================
+version: "v1beta2"
+metadata:
+  name: "enterprise-ai-workload-catalog"
+  description: "Workload catalog aligned with Hugging Face and Red Hat AI validated repositories deployable on OpenShift AI"
+
+workload_types:
+  # ----------------------------------------------------------------------------
+  # 1. Foundational Mid-Sized LLM (7B-13B)
+  # ----------------------------------------------------------------------------
+  llm_foundational:
+    ignore: false
+    description: "Foundational and domain-specific generative language models for dialogue, instruction following, and reasoning"
+    model:
+      model_type: "CausalLM"
+      base_model: "meta-llama/Meta-Llama-3.1-8B-Instruct, mistralai/Mistral-7B-Instruct-v0.3, ibm-granite/granite-3.1-8b-instruct, tiiuae/falcon-7b-instruct" #[cite: 1]
+      size: "7B-13B params" #[cite: 1]
+      notes: "Instruction tuning and domain dialogue; deployable on RHOAI via vLLM ServingRuntime" #[cite: 1, 2]
+      data_requirements:
+        input_type: "Text" #[cite: 1]
+        size: "100GB-2TB+" #[cite: 1]
+        format: "JSONL, Parquet, TXT" #[cite: 1]
+      resource_recommendations:
+        gpu_type: "NVIDIA H100 / A100" #[cite: 1]
+        gpu_count: "8-32" #[cite: 1]
+        memory: "80GB (Full Tuning) / 40GB (LoRA)" #[cite: 1, 2]
+        storage: "10TB NVMe SSD (Checkpoints + Tokenized Cache)" #[cite: 1]
+        network_throughput: "100 Gbps (Multi-node DDP/FSDP)" #[cite: 1]
+      training_specification:
+        batch_size: 128 #[cite: 2]
+        batch_unit: "sequences"
+        max_sequence_length_tokens: 4096
+        epochs: "3-5" #[cite: 2]
+        training_time_reference_gpu: "7-14 days on 8x A100s" #[cite: 2]
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "100GB curated dialogues (~25B tokens)" #[cite: 2]
+        precision: "bfloat16 / FP8" #[cite: 2]
+        framework: "DeepSpeed ZeRO-3 / Hugging Face / TRL" #[cite: 2]
+        training_time_reference_gpu: "5-7 days on 8x A100s" #[cite: 2]
+        optimization: "LoRA, QLoRA, FlashAttention-2" #[cite: 2]
+
+  # ----------------------------------------------------------------------------
+  # 2. Flagship Large LLM & Agentic Orchestrator (32B-72B)
+  # ----------------------------------------------------------------------------
+  llm_flagship_orchestrator:
+    ignore: false
+    description: "High-parameter reasoning models for complex task planning, multi-step agent orchestration, and deep reasoning"
+    model:
+      model_type: "CausalLM / AgentBrain"
+      base_model: "Qwen/Qwen2.5-72B-Instruct, meta-llama/Llama-3.3-70B-Instruct, Qwen/Qwen2.5-32B-Instruct"
+      size: "32B-72B params"
+      notes: "Tensor parallel serving (TP=4) on NVLink via vLLM; prefix caching and guided decoding enabled"
+      data_requirements:
+        input_type: "Text + Multi-turn Agent Trajectories"
+        size: "500GB-5TB"
+        format: "JSONL, Parquet"
+      resource_recommendations:
+        gpu_type: "NVIDIA H100 SXM5"
+        gpu_count: "4-8"
+        memory: "80GB"
+        storage: "15TB NVMe SSD"
+        network_throughput: "100-400 Gbps"
+      training_specification:
+        batch_size: 256
+        batch_unit: "sequences"
+        max_sequence_length_tokens: 8192
+        epochs: "3-5"
+        training_time_reference_gpu: "14-28 days on 8x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "250GB enterprise multi-hop reasoning data"
+        precision: "bfloat16 / FP8"
+        framework: "DeepSpeed ZeRO-3 / Megatron-LM / TRL"
+        training_time_reference_gpu: "7-12 days on 8x A100s"
+        optimization: "LoRA / QLoRA / FP8 Transformer Engine"
+
+  # ----------------------------------------------------------------------------
+  # 3. Text-to-Speech (TTS)
+  # ----------------------------------------------------------------------------
+  tts:
+    ignore: false
+    description: "Acoustic modeling and neural speech synthesis for multi-lingual and multi-speaker voice generation"
+    model:
+      model_type: "AcousticModel + NeuralVocoder"
+      base_model: "espnet/kan-bayashi_ljspeech_vits, facebook/mms-tts-eng, hexgrad/Kokoro-82M" #[cite: 1]
+      size: "Medium-sized (82M-300M params)" #[cite: 1]
+      notes: "Multi-speaker synthesis; deployable on RHOAI using Triton Inference Server or KServe custom container" #[cite: 1, 2]
+      data_requirements:
+        input_type: "Audio + Transcripts" #[cite: 1]
+        size: "20K - 500K samples (300 hours multi-speaker)" #[cite: 1, 2]
+        format: "WAV (22.05kHz/24kHz mono) + Text" #[cite: 1]
+      resource_recommendations:
+        gpu_type: "NVIDIA H100 / A100 / L40S" #[cite: 1]
+        gpu_count: "4-8" #[cite: 1]
+        memory: "40-80GB" #[cite: 1]
+        storage: "5TB NVMe" #[cite: 1]
+        network_throughput: "25-100 Gbps" #[cite: 1]
+      training_specification:
+        batch_size: 48 #[cite: 2]
+        batch_unit: "audio_waveforms"
+        max_sequence_length_tokens: 2048
+        epochs: "200-300" #[cite: 2]
+        training_time_reference_gpu: "2-4 days on 8x A100s" #[cite: 2]
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "300 hours multi-speaker audio with forced alignment (MFA)" #[cite: 2]
+        precision: "FP16 / bfloat16"
+        framework: "PyTorch / ESPnet / Coqui TTS"
+        training_time_reference_gpu: "2-4 days on 8x A100s" #[cite: 2]
+        optimization: "HiFi-GAN vocoder adaptation, speaker embedding transfer" #[cite: 2]
+
+  # ----------------------------------------------------------------------------
+  # 4. Speech-to-Text (STT)
+  # ----------------------------------------------------------------------------
+  stt:
+    ignore: false
+    description: "Automated speech recognition (ASR) for acoustic audio transcription and translation"
+    model:
+      model_type: "Seq2Seq / Conformer / ASR"
+      base_model: "openai/whisper-large-v3-turbo, openai/whisper-large-v3, facebook/conformer-ctc-large" #[cite: 1]
+      size: "Medium-Large (300M-1.5B params)" #[cite: 1]
+      notes: "Native OpenShift AI vLLM deployment via --task transcription and /v1/audio/transcriptions endpoint" #[cite: 1, 3]
+      data_requirements:
+        input_type: "Audio + Transcriptions" #[cite: 1]
+        size: "10K - 100K hours (Primary) up to 1M hours (Pretraining)" #[cite: 1, 3]
+        format: "WAV (16kHz mono) / FLAC + JSON" #[cite: 1]
+      resource_recommendations:
+        gpu_type: "NVIDIA H100 / A100" #[cite: 1]
+        gpu_count: "4-8" #[cite: 1]
+        memory: "40-80GB" #[cite: 1]
+        storage: "20TB NVMe (Accommodates 100k hrs FLAC + spectrogram cache)" #[cite: 1, 3]
+        network_throughput: "50-100 Gbps" #[cite: 1]
+      training_specification:
+        batch_size: 64 #[cite: 2]
+        batch_unit: "audio_samples (30-second mel chunks)"
+        max_sequence_length_tokens: 448
+        epochs: "50-100" #[cite: 2]
+        training_time_reference_gpu: "4-10 days on 8x A100s" #[cite: 2]
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "10k-100k hours domain-specific speech (~1.2TB - 12TB raw audio)" #[cite: 3]
+        precision: "bfloat16 / FP16"
+        framework: "Hugging Face / PyTorch / NeMo"
+        training_time_reference_gpu: "4-10 days on 8x A100s" #[cite: 2]
+        optimization: "LoRA / FlashAttention-2 / SpecAugment" #[cite: 3]
+
+  # ----------------------------------------------------------------------------
+  # 5. Speech-to-Speech (STS)
+  # ----------------------------------------------------------------------------
+  sts:
+    ignore: false
+    description: "End-to-end and cascaded speech-to-speech translation and voice conversion"
+    model:
+      model_type: "Modular Synthesis Pipeline / Multimodal ASR-TTS" #[cite: 1]
+      base_model: "facebook/seamless-m4t-v2-large, openai/whisper-large-v3-turbo + ibm-granite/granite-3.1-8b-instruct + hexgrad/Kokoro-82M" #[cite: 1]
+      size: "Modular composite (approx. 8B-15B combined params)"
+      notes: "Modular synthesis deployed across OpenShift Service Mesh or single-model SeamlessM4T on KServe" #[cite: 1]
+      data_requirements:
+        input_type: "Parallel Speech" #[cite: 1]
+        size: "50K - 500K samples" #[cite: 1]
+        format: "WAV-to-WAV" #[cite: 1]
+      resource_recommendations:
+        gpu_type: "NVIDIA H100 / A100" #[cite: 1, 2]
+        gpu_count: "8" #[cite: 2]
+        memory: "80GB" #[cite: 2]
+        storage: "10TB NVMe" #[cite: 2]
+        network_throughput: "50-100 Gbps" #[cite: 2]
+      training_specification:
+        batch_size: 32 #[cite: 2]
+        batch_unit: "parallel_audio_pairs"
+        max_sequence_length_tokens: 1024
+        epochs: "50" #[cite: 2]
+        training_time_reference_gpu: "3-7 days on 8x A100s" #[cite: 2]
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "50K - 500K parallel speech audio segments" #[cite: 1]
+        precision: "bfloat16 / FP16"
+        framework: "Fairseq / PyTorch / vLLM cascade"
+        training_time_reference_gpu: "3-7 days on 8x A100s" #[cite: 2]
+        optimization: "Direct audio-to-audio latent alignment / LoRA"
+
+  # ----------------------------------------------------------------------------
+  # 6. Computer Vision (Vision)
+  # ----------------------------------------------------------------------------
+  vision:
+    ignore: false
+    description: "Deep visual understanding, zero-shot classification, segmentation, and real-time object detection"
+    model:
+      model_type: "VisionTransformer / ConvNet / Segmenter"
+      base_model: "openai/clip-vit-large-patch14-336, facebook/sam-vit-huge, google/vit-base-patch16-224, ultralytics/yolov8x" #[cite: 1]
+      size: "100M-1B params" #[cite: 1]
+      notes: "Zero-shot classification, segmentation, and object detection; deployed via Triton or TorchServe on RHOAI" #[cite: 1, 3]
+      data_requirements:
+        input_type: "Images + Labels" #[cite: 1]
+        size: "1M+ images" #[cite: 1]
+        format: "COCO, Pascal VOC, PNG/JPEG" #[cite: 1]
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S / RTX 6000 Ada / A100" #[cite: 2]
+        gpu_count: "4-8" #[cite: 2]
+        memory: "48-80GB" #[cite: 2]
+        storage: "5-10TB NVMe" #[cite: 2]
+        network_throughput: "50-100 Gbps (Supports multi-node contrastive DDP)" #[cite: 2]
+      training_specification:
+        batch_size: 192 #[cite: 2]
+        batch_unit: "images"
+        max_sequence_length_tokens: 0
+        epochs: "100-200" #[cite: 2]
+        training_time_reference_gpu: "3-6 days on 8x A100 / RTX 6000" #[cite: 2]
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "1M+ labeled images (~500GB - 1TB)" #[cite: 3]
+        precision: "bfloat16 / FP16"
+        framework: "PyTorch / Torchvision / Ultralytics"
+        training_time_reference_gpu: "3-6 days on 8x A100s" #[cite: 2]
+        optimization: "Contrastive representation learning, transfer fine-tuning" #[cite: 3]
+
+  # ----------------------------------------------------------------------------
+  # 7. Document AI & Vision-Language Parsers (DocAI / VLM)
+  # ----------------------------------------------------------------------------
+  document_vlm:
+    ignore: false
+    description: "Multimodal document understanding, table extraction, and dense visual PDF parsing"
+    model:
+      model_type: "VisionLanguageModel / MultiModalEncoder"
+      base_model: "vidore/colpali-v1.2, microsoft/Florence-2-large, facebook/nougat-base"
+      size: "200M-3B params"
+      notes: "Replaces legacy OCR with visual patch tokenization; deployable on KServe via vLLM multimodal"
+      data_requirements:
+        input_type: "PDF Pages + Scanned TIFF/PNG"
+        size: "500K - 5M scanned document pages"
+        format: "PDF, TIFF, JPEG + JSON bounding boxes"
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S / H100 (MIG 3g.40gb)"
+        gpu_count: "2-4"
+        memory: "40-48GB"
+        storage: "5TB NVMe"
+        network_throughput: "25-50 Gbps"
+      training_specification:
+        batch_size: 64
+        batch_unit: "rendered_pages"
+        max_sequence_length_tokens: 2048
+        epochs: "10-20"
+        training_time_reference_gpu: "2-5 days on 8x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "200K annotated enterprise invoices, contracts, IDs"
+        precision: "bfloat16 / FP16"
+        framework: "Hugging Face / PyTorch / Transformers"
+        training_time_reference_gpu: "2-4 days on 4x A100s"
+        optimization: "LoRA / FlashAttention-2"
+
+  # ----------------------------------------------------------------------------
+  # 8. Vector Embeddings & Cross-Encoder Rerankers
+  # ----------------------------------------------------------------------------
+  vector_embeddings_reranking:
+    ignore: false
+    description: "Dense/sparse vector representations and cross-encoder scoring for enterprise RAG retrieval"
+    model:
+      model_type: "BiEncoder / CrossEncoder"
+      base_model: "BAAI/bge-m3, intfloat/e5-mistral-7b-instruct, BAAI/bge-reranker-large"
+      size: "300M-1B params"
+      notes: "Native OpenShift AI deployment via Text Embeddings Inference (TEI) ServingRuntime"
+      data_requirements:
+        input_type: "Paired Query-Passage Text"
+        size: "5M - 50M sentence pairs"
+        format: "JSONL, TSV, Parquet"
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S (Time-sliced) / H100 (MIG 1g.10gb)"
+        gpu_count: "2-4"
+        memory: "10-24GB"
+        storage: "2TB"
+        network_throughput: "25 Gbps"
+      training_specification:
+        batch_size: 1024
+        batch_unit: "query_passage_pairs"
+        max_sequence_length_tokens: 512
+        epochs: "5-10"
+        training_time_reference_gpu: "2-4 days on 8x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "2M domain-specific query-chunk pairs (hard negatives mined)"
+        precision: "FP16 / bfloat16"
+        framework: "Sentence-Transformers / PyTorch"
+        training_time_reference_gpu: "1-2 days on 4x A100s"
+        optimization: "MultipleNegativesRankingLoss / Matryoshka Embeddings"
+
+  # ----------------------------------------------------------------------------
+  # 9. AI Safety, Guardrails & Regulatory Compliance
+  # ----------------------------------------------------------------------------
+  safety_guardrails:
+    ignore: false
+    description: "Inline safety classification, prompt injection defense, and automated PII scrubbing (POPIA/GDPR)"
+    model:
+      model_type: "SequenceClassifier / TokenClassifier / Guardrail"
+      base_model: "meta-llama/Llama-Guard-3-8B, ibm-granite/granite-guardian-3.1-8b, google/shieldgemma-2b"
+      size: "500M-8B params"
+      notes: "Deploys on KServe via vLLM as an inline proxy filter sidecar (< 15ms target)"
+      data_requirements:
+        input_type: "Prompt-Response Pairs + Redaction Entities"
+        size: "100K - 1M safety evaluation dialogues"
+        format: "JSONL"
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S (Time-sliced) / H100 (MIG 1g.10gb)"
+        gpu_count: "1-2"
+        memory: "10-24GB"
+        storage: "500GB"
+        network_throughput: "10-25 Gbps"
+      training_specification:
+        batch_size: 128
+        batch_unit: "text_samples"
+        max_sequence_length_tokens: 2048
+        epochs: "5-10"
+        training_time_reference_gpu: "1-2 days on 4x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "50K red-teaming dialogues and localized regulatory PII samples"
+        precision: "FP16 / bfloat16"
+        framework: "NeMo Guardrails / Hugging Face / TRL"
+        training_time_reference_gpu: "12-24 hours on 2x A100s"
+        optimization: "Quantization (INT8/FP8) / Direct distillation"
+
+  # ----------------------------------------------------------------------------
+  # 10. Agentic & Small Language Models (Worker Agents)
+  # ----------------------------------------------------------------------------
+  agentic_slm:
+    ignore: false
+    description: "Compact models optimized for zero-shot function calling, OpenAPI tool execution, and JSON adherence"
+    model:
+      model_type: "GuidedCausalLM"
+      base_model: "ibm-granite/granite-3.1-8b-instruct, Qwen/Qwen2.5-7B-Instruct, meetkai/functionary-medium-v3.2"
+      size: "3B-8B params"
+      notes: "High TTFT speed, native Outlines/XGrammar guided decoding, automated tool parsing in vLLM"
+      data_requirements:
+        input_type: "Text + Tool Schemas + Execution Logs"
+        size: "10GB-50GB synthetic execution trajectories"
+        format: "JSONL, OpenAPI Specs"
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S / H100 (MIG 3g.40gb)"
+        gpu_count: "1-4"
+        memory: "40-48GB"
+        storage: "2TB NVMe"
+        network_throughput: "25 Gbps"
+      training_specification:
+        batch_size: 64
+        batch_unit: "execution_trajectories"
+        max_sequence_length_tokens: 8192
+        epochs: "3-5"
+        training_time_reference_gpu: "2-4 days on 8x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "50K multi-turn tool-calling trajectories"
+        precision: "bfloat16 / FP8"
+        framework: "TRL / Hugging Face / DeepSpeed"
+        training_time_reference_gpu: "1-3 days on 4x A100s"
+        optimization: "LoRA / DPO (Direct Preference Optimization)"
+
+  # ----------------------------------------------------------------------------
+  # 11. Enterprise Code Generation & Developer Productivity
+  # ----------------------------------------------------------------------------
+  code_assistant:
+    ignore: false
+    description: "In-IDE autocomplete, SQL generation, and legacy code translation assistants"
+    model:
+      model_type: "CausalLM"
+      base_model: "Qwen/Qwen2.5-Coder-14B-Instruct, ibm-granite/granite-3.1-8b-code-instruct, bigcode/starcoder2-15b"
+      size: "8B-15B params"
+      notes: "Large context window (32k-64k tokens); deployable on RHOAI vLLM with FP8 KV-cache"
+      data_requirements:
+        input_type: "Source Code + AST + Git Commits"
+        size: "200GB-1TB curated enterprise repositories"
+        format: "Parquet, JSONL"
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S (Dedicated) / H100 (MIG 3g.40gb)"
+        gpu_count: "2-4"
+        memory: "40-48GB"
+        storage: "5TB"
+        network_throughput: "25-50 Gbps"
+      training_specification:
+        batch_size: 64
+        batch_unit: "code_files"
+        max_sequence_length_tokens: 16384
+        epochs: "3-5"
+        training_time_reference_gpu: "4-8 days on 8x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "50GB proprietary codebases and internal API SDKs"
+        precision: "bfloat16 / FP8"
+        framework: "Hugging Face / DeepSpeed"
+        training_time_reference_gpu: "2-4 days on 4x A100s"
+        optimization: "LoRA / Fill-in-the-Middle (FIM) training"
+
+  # ----------------------------------------------------------------------------
+  # 12. GPU Tabular Modeling & Graph Neural Networks (GNN)
+  # ----------------------------------------------------------------------------
+  tabular_gnn_fraud:
+    ignore: false
+    description: "GPU-accelerated gradient boosting and graph neural networks for SIM-swap and financial fraud detection"
+    model:
+      model_type: "GraphConvolution / GPU-Boosted Trees"
+      base_model: "yandex/ft-transformer, dgl/graphsage-fraud-detection, rapidsai/xgboost-fraud"
+      size: "Millions of nodes / billions of tabular rows"
+      notes: "Trained using NVIDIA RAPIDS on Ray/PyTorchJob; served via Triton Inference Server (FIL backend)"
+      data_requirements:
+        input_type: "Graph Edges + Tabular Call Detail Records (CDR)"
+        size: "500GB - 5TB relational/graph tables"
+        format: "Parquet, DMatrix, Graph Arrow IPC"
+      resource_recommendations:
+        gpu_type: "NVIDIA H100 / L40S"
+        gpu_count: "2-4"
+        memory: "48-80GB"
+        storage: "10TB NVMe"
+        network_throughput: "50-100 Gbps"
+      training_specification:
+        batch_size: 4096
+        batch_unit: "subgraphs_or_rows"
+        max_sequence_length_tokens: 0
+        epochs: "50-100"
+        training_time_reference_gpu: "1-3 days on 4x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "100M transaction records with verified fraud labels"
+        precision: "FP32 / FP16"
+        framework: "NVIDIA RAPIDS (cuML, cuGraph) / PyTorch Geometric"
+        training_time_reference_gpu: "12-24 hours on 4x A100s"
+        optimization: "Neighborhood sampling, unified virtual memory (UVM)"
+
+  # ----------------------------------------------------------------------------
+  # 13. Telemetry Time-Series Forecasting & AIOps
+  # ----------------------------------------------------------------------------
+  timeseries_aiops:
+    ignore: false
+    description: "Foundation time-series transformers for cellular network traffic forecasting and proactive anomaly detection"
+    model:
+      model_type: "PatchTransformer / TimeSeriesForecaster"
+      base_model: "ibm-granite/granite-timeseries-patchtst, amazon/chronos-t5-base, kats/patchtst-telecom"
+      size: "50M-500M params"
+      notes: "Predicts RAN traffic congestion and optical transport link degradation; deployable on KServe via Hugging Face runtime"
+      data_requirements:
+        input_type: "Timestamped Multi-Variate Telemetry"
+        size: "100M - 1B metric time-series points"
+        format: "Parquet, Feather, Influx/Prometheus Snappy"
+      resource_recommendations:
+        gpu_type: "NVIDIA L40S (Time-sliced) / H100 (MIG 1g.10gb)"
+        gpu_count: "1-2"
+        memory: "10-24GB"
+        storage: "2TB"
+        network_throughput: "10-25 Gbps"
+      training_specification:
+        batch_size: 256
+        batch_unit: "time_series_patches"
+        max_sequence_length_tokens: 512
+        epochs: "20-50"
+        training_time_reference_gpu: "1-3 days on 4x A100s"
+      fine_tuning_requirements:
+        input_dataset_size_and_type: "50M localized radio cell telemetry data points"
+        precision: "FP16 / bfloat16"
+        framework: "PyTorch / AutoGluon"
+        training_time_reference_gpu: "6-18 hours on 2x A100s"
+        optimization: "Patch masking, zero-shot transfer"

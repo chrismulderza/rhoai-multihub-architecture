@@ -18,6 +18,7 @@ The recovery target exercised by the later node-failure test is restoration of t
 
 ```mermaid
 stateDiagram-v2
+  direction TB
   [*] --> ServingOnNode1
   ServingOnNode1 --> TolerationWindow: Node 1 is not ready
   TolerationWindow --> ServingOnNode1: Node 1 recovers within 10 seconds

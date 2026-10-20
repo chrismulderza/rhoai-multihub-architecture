@@ -5,23 +5,23 @@ exclude_docs: |
 
 theme:
   name: material
+  logo: assets/images/openshift.png
+  favicon: assets/images/openshift.png
   font:
     text: Red Hat Display
     code: Red Hat Mono
   palette:
-    - media: "(prefers-color-scheme: light)"
-      scheme: default
-      primary: custom
-      accent: custom
-      toggle:
-        icon: material/brightness-4
-        name: Switch to dark mode
-    - media: "(prefers-color-scheme: dark)"
-      scheme: slate
+    - scheme: default
       primary: custom
       accent: custom
       toggle:
         icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
         name: Switch to light mode
   features:
     - navigation.instant
